@@ -1,0 +1,145 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    networks:
+      - media
+    ports:
+      - "8096:8096"
+    environment:
+      - TZ=Europe/Athens
+    volumes:
+      - /opt/media-stack/config/jellyfin:/config
+      - /opt/media-stack/config/jellyfin/cache:/cache
+      - /media:/media
+    devices:
+      - /dev/dri:/dev/dri
+
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    restart: unless-stopped
+    networks:
+      - media
+    ports:
+      - "5055:5055"
+    environment:
+      - TZ=Europe/Athens
+      - LOG_LEVEL=info
+    volumes:
+      - /opt/media-stack/config/jellyseerr:/app/config
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    networks:
+      - media
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+      - "6881:6881/udp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - /opt/media-stack/config/qbittorrent:/config
+      - /downloads:/downloads
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    networks:
+      - media
+    ports:
+      - "9696:9696"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+    volumes:
+      - /opt/media-stack/config/prowlarr:/config
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    networks:
+      - media
+    ports:
+      - "8989:8989"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+    volumes:
+      - /opt/media-stack/config/sonarr:/config
+      - /downloads:/downloads
+      - /media:/media
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    networks:
+      - media
+    ports:
+      - "7878:7878"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+    volumes:
+      - /opt/media-stack/config/radarr:/config
+      - /downloads:/downloads
+      - /media:/media
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    networks:
+      - media
+    ports:
+      - "6767:6767"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Athens
+    volumes:
+      - /opt/media-stack/config/bazarr:/config
+      - /media:/media
+
+  autobrr:
+    image: ghcr.io/autobrr/autobrr:latest
+    container_name: autobrr
+    restart: unless-stopped
+    networks:
+      - media
+    ports:
+      - "7474:7474"
+    environment:
+      - TZ=Europe/Athens
+    volumes:
+      - /opt/media-stack/config/autobrr:/config
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:8
+    container_name: recyclarr
+    restart: unless-stopped
+    networks:
+      - media
+    environment:
+      - TZ=Europe/Athens
+    volumes:
+      - /opt/media-stack/config/recyclarr:/config
+    command: sync
+
+networks:
+  media:
+    name: media
