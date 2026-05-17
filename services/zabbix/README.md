@@ -91,7 +91,8 @@ Monitoring tools used alongside Zabbix include:
 ## Screenshots
 
 <p align="center">
-  <img src="./images/image.png"/>
+  <img src="./images/image.png" width="45%" />
+  <img src="./images/image2.png" width="45%" />
 </p>
 
 <p align="center">
