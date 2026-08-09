@@ -1,0 +1,37 @@
+---
+- name: Bootstrap Docker hosts and deploy homelab services
+  hosts: docker_hosts
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - git
+          - docker.io
+          - docker-compose-v2
+        state: present
+        update_cache: true
+
+    - name: Enable Docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Clone/update homelab repository
+      ansible.builtin.git:
+        repo: "{{ homelab_repo_url }}"
+        dest: "{{ homelab_repo_path }}"
+        version: "{{ homelab_repo_version }}"
+        update: true
+
+    - name: Deploy assigned Compose stacks
+      community.docker.docker_compose_v2:
+        project_src: "{{ homelab_repo_path }}/services/{{ item }}"
+        state: present
+        pull: missing
+      loop: "{{ homelab_services | default([]) }}"
