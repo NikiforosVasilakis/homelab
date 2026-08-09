@@ -1,0 +1,29 @@
+all:
+  vars:
+    ansible_user: root
+    homelab_repo_url: https://github.com/NikiforosVasilakis/homelab.git
+    homelab_repo_path: /opt/homelab
+    homelab_repo_version: main
+
+  children:
+    docker_hosts:
+      hosts:
+        monitoring:
+          ansible_host: 192.168.1.93
+          homelab_services:
+            - zabbix
+            - Kuma
+
+        media:
+          ansible_host: 192.168.1.107
+          homelab_services:
+            - MediaServer
+
+        apps:
+          ansible_host: 192.168.1.108
+          homelab_services:
+            - nginx
+            - n8n
+            - Gitea
+            - memos
+            - Glance_Dashboard
