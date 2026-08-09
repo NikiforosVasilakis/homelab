@@ -2,15 +2,17 @@
 
 ## Overview
 
-This project represents a self-hosted homelab environment built to explore systems, networking, and virtualization in a practical way.
+This project represents a self-hosted homelab environment built to explore systems, networking, virtualization, and Infrastructure as Code in a practical way.
 
-The environment is designed to simulate real-world infrastructure, focusing on service deployment, network segmentation, secure access, and system monitoring.
+The environment is designed to simulate real-world infrastructure, focusing on service deployment, network segmentation, secure access, monitoring, and reproducible configuration.
 
 ---
 
 ## Key Features
 
 * Virtualized infrastructure using Proxmox
+* Terraform-managed LXC infrastructure
+* Ansible-managed host bootstrap and service deployment
 * 8+ self-hosted services (Docker & LXC)
 * VLAN-based network segmentation
 * Reverse proxy with local DNS routing
@@ -22,13 +24,104 @@ The environment is designed to simulate real-world infrastructure, focusing on s
 
 ## Architecture
 
+```text
+Git repository
+├── terraform/  -> Proxmox infrastructure
+├── ansible/    -> OS/bootstrap + Compose deployment
+└── services/   -> application definitions
+
+Terraform
+   ↓
+Proxmox
+   ↓
+LXC containers
+   ↓
+Ansible
+   ↓
+Docker Compose services
+```
+
 * **Hypervisor:** Proxmox VE
+* **Infrastructure:** Terraform using `bpg/proxmox`
+* **Configuration:** Ansible
 * **Containers:** Docker & LXC
 * **Networking:** VLANs, firewall rules
-* **DNS:** Pi-hole (network-wide filtering + local DNS)
+* **DNS:** Pi-hole
 * **Reverse Proxy:** Nginx Proxy Manager
-* **Monitoring:** Uptime Kuma + Dashboard
+* **Monitoring:** Uptime Kuma + Zabbix
 * **Remote Access:** Tailscale
+
+---
+
+## Infrastructure as Code
+
+The Terraform configuration is intentionally safe by default: `containers = {}` until the live Proxmox inventory is captured. Existing production containers should be imported into state before Terraform is allowed to manage them.
+
+### 1. Capture the current Proxmox state
+
+Run on the Proxmox node:
+
+```bash
+pveversion -v
+qm list
+pct list
+pvesm status
+ip addr
+ip route
+cat /etc/network/interfaces
+
+for id in $(pct list | awk 'NR>1 {print $1}'); do
+  echo "===== LXC $id ====="
+  pct config "$id"
+done
+
+for id in $(qm list | awk 'NR>1 {print $1}'); do
+  echo "===== VM $id ====="
+  qm config "$id"
+done
+```
+
+Do not commit secrets, API tokens, private keys, or passwords.
+
+### 2. Configure Terraform
+
+```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+```
+
+Set the API token outside Git:
+
+```bash
+export TF_VAR_proxmox_api_token='terraform@pve!provider=TOKEN_SECRET'
+```
+
+Then:
+
+```bash
+terraform init
+terraform fmt -check
+terraform validate
+terraform plan
+```
+
+Do **not** run `terraform apply` against the live lab until the `containers` map reflects reality and existing containers have been imported where appropriate.
+
+### 3. Configure Ansible
+
+```bash
+cd ../ansible
+ansible-galaxy collection install -r requirements.yml
+cp inventory/hosts.yml.example inventory/hosts.yml
+```
+
+Edit the hosts and the `homelab_services` lists, then run:
+
+```bash
+ansible-playbook -i inventory/hosts.yml site.yml
+```
+
+The playbook installs Docker, clones this repository on each Docker host, and starts the Compose stacks assigned to that host.
 
 ---
 
@@ -54,6 +147,7 @@ This improves security, traffic control, and overall system reliability.
 * **Memos** → note-taking service
 * **n8n** → automation workflows
 * **Glance Dashboard** → service overview
+* **Uptime Kuma / Zabbix** → monitoring
 * **Tailscale** → secure remote access
 
 ---
@@ -62,7 +156,18 @@ This improves security, traffic control, and overall system reliability.
 
 ```text
 homelab/
-├── README.md
+├── terraform/
+│   ├── main.tf
+│   ├── providers.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── versions.tf
+│   └── terraform.tfvars.example
+├── ansible/
+│   ├── site.yml
+│   ├── requirements.yml
+│   └── inventory/
+│       └── hosts.yml.example
 └── services/
     ├── pihole/
     ├── nginx/
@@ -71,7 +176,9 @@ homelab/
     ├── n8n/
     ├── Glance_Dashboard/
     ├── Tailscale/
-    └── Gitea/
+    ├── Gitea/
+    ├── Kuma/
+    └── zabbix/
 ```
 
 ---
@@ -79,9 +186,10 @@ homelab/
 ## Goals
 
 * Build and manage a self-hosted infrastructure
-* Gain hands-on experience with networking and systems
-* Improve troubleshooting and performance optimization skills
-* Learn service orchestration and automation
+* Make the environment reproducible from Git
+* Gain hands-on experience with Terraform and Ansible
+* Improve networking, systems, automation, and troubleshooting skills
+* Keep application configuration separate from infrastructure configuration
 
 ---
 
@@ -90,8 +198,10 @@ homelab/
 This homelab is actively maintained and used daily.
 It serves as both a learning platform and a real-world system for experimenting with infrastructure concepts.
 
+The current IaC layer is the first migration step. Live Proxmox values still need to be captured before existing containers should be imported or recreated.
+
 ---
 
 ## Disclaimer
 
-Sensitive information such as IP addresses, credentials, and private data has been removed or sanitized from this repository.
+Sensitive information such as IP addresses, credentials, API tokens, and private data must not be committed to this repository.

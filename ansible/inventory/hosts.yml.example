@@ -1,0 +1,19 @@
+all:
+  vars:
+    ansible_user: root
+    homelab_repo_url: "https://github.com/NikiforosVasilakis/homelab.git"
+    homelab_repo_version: "main"
+    homelab_repo_path: "/opt/homelab"
+
+  children:
+    docker_hosts:
+      hosts:
+        # Replace these with the real LXC/VM IPs after inventorying Proxmox.
+        monitoring:
+          ansible_host: 192.168.1.93
+          homelab_services:
+            - zabbix
+        media:
+          ansible_host: 192.168.1.107
+          homelab_services:
+            - MediaServer
