@@ -112,13 +112,13 @@ Do **not** run `terraform apply` against the live lab until the `containers` map
 ```bash
 cd ../ansible
 ansible-galaxy collection install -r requirements.yml
-cp inventory.example.yml inventory.yml
+cp inventory/hosts.yml.example inventory/hosts.yml
 ```
 
 Edit the hosts and the `homelab_services` lists, then run:
 
 ```bash
-ansible-playbook -i inventory.yml site.yml
+ansible-playbook -i inventory/hosts.yml site.yml
 ```
 
 The playbook installs Docker, clones this repository on each Docker host, and starts the Compose stacks assigned to that host.
@@ -166,7 +166,8 @@ homelab/
 ├── ansible/
 │   ├── site.yml
 │   ├── requirements.yml
-│   └── inventory.example.yml
+│   └── inventory/
+│       └── hosts.yml.example
 └── services/
     ├── pihole/
     ├── nginx/
