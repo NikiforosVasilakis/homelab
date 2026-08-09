@@ -1,0 +1,31 @@
+# Copy to terraform.tfvars and replace the examples with your live values.
+# NEVER commit terraform.tfvars if it contains credentials.
+
+proxmox_endpoint         = "https://pve.example.lan:8006/"
+proxmox_node             = "pve"
+proxmox_ssh_username     = "root"
+proxmox_insecure         = true
+lxc_template_file_id     = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+default_datastore        = "local-lvm"
+default_bridge           = "vmbr0"
+
+# Set the token via environment instead:
+# export TF_VAR_proxmox_api_token='terraform@pve!provider=...'
+
+# Keep this EMPTY until the live containers have been inventoried.
+containers = {}
+
+# Example only:
+# containers = {
+#   monitoring = {
+#     vm_id        = 193
+#     hostname     = "monitoring"
+#     cores        = 2
+#     memory_mb    = 2048
+#     disk_gb      = 16
+#     ipv4_address = "192.168.1.93/24"
+#     ipv4_gateway = "192.168.1.1"
+#     nesting      = true
+#     ssh_keys     = ["ssh-ed25519 AAAA... your-key"]
+#   }
+# }
